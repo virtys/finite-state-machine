@@ -7,8 +7,9 @@ class FSM {
         this.states = config.states;
         this.state = config.initial;
         this.history = {
-            steps: 0,
-            states: [this.state]
+            step: 0,
+            states: [this.state],
+            statusRedo: false
         };
     }
 
@@ -57,17 +58,13 @@ class FSM {
      */
     reset() {
         this.state = this.history.states[0];
-        this.steps = 0;
+        this.clearHistory();
     }
 
     setHistory(state) {
-        // this.history.states.push(state);
-        if(this.history.steps < this.history.states.length - 1) {
-            this.history.steps = this.history.states.length - 1;
-        }
-
         this.history.states.push(state);
-        this.history.steps++;
+        this.history.step++;
+        this.history.statusRedo = false;
     }
 
     /**
@@ -80,7 +77,7 @@ class FSM {
         let statesArray = [];
         if(event == undefined || event == '') {
             for (let key in this.states) {
-               statesArray.push(key);
+                statesArray.push(key);
             }
         }
         else {
@@ -100,13 +97,11 @@ class FSM {
      * @returns {Boolean}
      */
     undo() {
-        // let historyLength = this.history.length;
-        // if(historyLength === 0 || historyLength === 1) return false;
-        // this.state = this.history[historyLength - 2];
-        // return true;
-        if(!this.history.steps) return false;
-        this.history.steps--;
-        this.state = this.history.states[this.history.steps];
+        if(this.history.step < 1) return false;
+
+        this.history.step--;
+        this.state = this.history.states[this.history.step];
+        this.history.statusRedo = true;
         return true;
     }
 
@@ -116,10 +111,10 @@ class FSM {
      * @returns {Boolean}
      */
     redo() {
-        if(this.history.steps === this.history.states.length - 1) return false;
+        if(this.history.states[this.history.step + 1]===undefined || !this.history.statusRedo) return false;
 
-        this.history.steps++;
-        this.state = this.history.states[this.history.steps];
+        this.history.step++;
+        this.state = this.history.states[this.history.step];
 
         return true;
     }
@@ -127,7 +122,7 @@ class FSM {
      * Clears transition history
      */
     clearHistory() {
-        this.history.steps = 0;
+        this.history.step = 0;
         this.history.states = [this.history.states[0]]
     }
 }
